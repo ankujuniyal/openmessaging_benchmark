@@ -12,20 +12,28 @@
 # limitations under the License.
 #
 
-numWorkers: 4
-#image: openmessaging/openmessaging-benchmark:latest
-image: harbor.india.airtel.itm/devops/openmessaging/openmessaging-benchmark:latest
-imagePullPolicy: Always
-workload: workloads/1-topic-16-partitions-1kb.yaml
-driver: kafka-exactly-once.yaml
 
-# Resource Configurations
-driverMemoryRequest: 1Gi
-driverMemoryLimit: 16Gi
-driverCpuRequest: 1
-driverCpuLimit: 4
+name: Kafka-exactly-once
+driverClass: io.openmessaging.benchmark.driver.kafka.KafkaBenchmarkDriver
 
-workersMemoryRequest: 1Gi
-workersMemoryLimit: 16Gi
-workersCpuRequest: 1
-workersCpuLimit: 4
+# Kafka client-specific configuration
+replicationFactor: '3'
+
+topicConfig: |
+  min.insync.replicas=2
+
+commonConfig: |
+  bootstrap.servers=10.5.28.114:9092
+
+producerConfig: |
+  enable.idempotence=true
+  max.in.flight.requests.per.connection=1
+  retries=2147483647
+  acks=all
+  linger.ms=1
+  batch.size=1048576
+
+consumerConfig: |
+  auto.offset.reset=earliest
+  enable.auto.commit=false
+  max.partition.fetch.bytes=10485760
