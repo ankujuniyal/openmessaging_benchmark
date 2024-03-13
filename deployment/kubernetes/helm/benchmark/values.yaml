@@ -12,15 +12,25 @@
 # limitations under the License.
 #
 
-numWorkers: 8
-image: openmessaging/openmessaging-benchmark:latest
+numWorkers: 4
+#image: openmessaging/openmessaging-benchmark:latest
+image: harbor.india.airtel.itm/devops/openmessaging/openmessaging-benchmark:latest
 imagePullPolicy: Always
 workload: workloads/1-topic-16-partitions-1kb.yaml
-driver: driver-pulsar/pulsar.yaml
+# driver: driver-pulsar/pulsar.yaml
+driver: kafka-exactly-once.yaml
 
 # Resource Configurations
-driverMemoryRequest: 512Mi
-driverMemoryLimit: 2048Mi
+# driverMemoryRequest: 512Mi
+# driverMemoryLimit: 2048Mi
+driverMemoryRequest: 1Gi
+driverMemoryLimit: 16Gi
+driverCpuRequest: 1
+driverCpuLimit: 4
 
 #workersMemoryRequest: 512Mi
 #workersMemoryLimit: 2048Mi
+workersMemoryRequest: 1Gi
+workersMemoryLimit: 16Gi
+workersCpuRequest: 1
+workersCpuLimit: 4

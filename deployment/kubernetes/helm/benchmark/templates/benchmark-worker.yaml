@@ -41,8 +41,10 @@ spec:
           resources:
             limits:
               memory: {{ .Values.workersMemoryLimit }}
+              cpu: {{ .Values.workersCpuLimit }}              
             requests:
               memory: {{ .Values.workersMemoryRequest }}
+              cpu: {{ .Values.workersCpuRequest }}              
           {{- end }}
           command: ["sh", "-c"]
           args:

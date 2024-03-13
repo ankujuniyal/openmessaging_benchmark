@@ -11,6 +11,40 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: {{ .Release.Name }}-driver-config
+  labels:
+    app: {{ .Release.Name }}
+    role: driver
+data:
+  kafka-exactly-once.yaml: |
+    name: Kafka-exactly-once
+    driverClass: io.openmessaging.benchmark.driver.kafka.KafkaBenchmarkDriver
+
+    # Kafka client-specific configuration
+    replicationFactor: '3'
+
+    topicConfig: |
+      min.insync.replicas=2
+
+    commonConfig: |
+      bootstrap.servers=10.5.28.114:9092
+
+    producerConfig: |
+      enable.idempotence=true
+      max.in.flight.requests.per.connection=1
+      retries=2147483647
+      acks=all
+      linger.ms=1
+      batch.size=1048576
+
+    consumerConfig: |
+      auto.offset.reset=earliest
+      enable.auto.commit=false
+      max.partition.fetch.bytes=10485760
+---
 
 apiVersion: v1
 kind: Pod
@@ -20,15 +54,29 @@ metadata:
     app: {{ .Release.Name }}
     role: driver
 spec:
+  securityContext:
+    runAsUser: 0
+  volumes:
+    - configMap:
+        name: {{ .Release.Name }}-driver-config
+      name: driver-yaml
   containers:
     - name: {{ .Release.Name }}-driver
       imagePullPolicy: {{ .Values.imagePullPolicy }}
       image: {{ .Values.image }}
+      serviceAccount: digital-experience-sa
+      volumeMounts:
+        - name: driver-yaml
+          mountPath: "/benchmark/{{ .Values.driver}}"
+          subPath: {{ .Values.driver}}
+          readOnly: true      
       resources:
         limits:
           memory: {{ .Values.driverMemoryLimit }}
+          cpu: {{ .Values.driverCpuLimit }}          
         requests:
           memory: {{ .Values.driverMemoryRequest }}
+          cpu: {{ .Values.driverCpuRequest }}          
       env:
         - name: NUM_WORKERS
           value: "{{ .Values.numWorkers }}"
@@ -36,8 +84,10 @@ spec:
           value: '{{ template "workers" .Values }}'
         - name: HEAP_OPTS
           value: '-Xms4G -Xmx4G'
+        - name: JVM_MEM
+          value: '-Xms1G -Xmx16G -XX:+UseG1GC          
       command: ["sh", "-c"]
-      args:
-        - >
-          echo "bin/benchmark --drivers {{ .Values.driver }} --workers $WORKERS {{ .Values.workload }}" > example-run.sh &&
-          tail -f /dev/null
+      args: ["bin/benchmark --drivers {{ .Values.driver }} --workers $WORKERS {{ .Values.workload }}"]
+        # - >
+        #   echo "bin/benchmark --drivers {{ .Values.driver }} --workers $WORKERS {{ .Values.workload }}" > example-run.sh &&
+        #   tail -f /dev/null
