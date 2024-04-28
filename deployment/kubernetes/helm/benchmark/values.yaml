@@ -14,7 +14,7 @@
 
 numWorkers: 4
 #image: openmessaging/openmessaging-benchmark:latest
-image: harbor.india.airtel.itm/devops/openmessaging/openmessaging-benchmark:latest
+image: docker.io/openmessaging/openmessaging-benchmark:latest
 imagePullPolicy: Always
 workload: workloads/1-topic-16-partitions-1kb.yaml
 # driver: driver-pulsar/pulsar.yaml

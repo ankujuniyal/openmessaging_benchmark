@@ -30,7 +30,7 @@ data:
       min.insync.replicas=2
 
     commonConfig: |
-      bootstrap.servers=10.5.28.114:9092
+      bootstrap.servers=broker1:9092
 
     producerConfig: |
       enable.idempotence=true
@@ -54,8 +54,6 @@ metadata:
     app: {{ .Release.Name }}
     role: driver
 spec:
-  securityContext:
-    runAsUser: 0
   volumes:
     - configMap:
         name: {{ .Release.Name }}-driver-config
@@ -64,7 +62,6 @@ spec:
     - name: {{ .Release.Name }}-driver
       imagePullPolicy: {{ .Values.imagePullPolicy }}
       image: {{ .Values.image }}
-      serviceAccount: digital-experience-sa
       volumeMounts:
         - name: driver-yaml
           mountPath: "/benchmark/{{ .Values.driver}}"
@@ -83,7 +80,7 @@ spec:
         - name: WORKERS
           value: '{{ template "workers" .Values }}'
         - name: HEAP_OPTS
-          value: '-Xms4G -Xmx4G'
+          value: '-Xms16G -Xmx16G'
         - name: JVM_MEM
           value: '-Xms1G -Xmx16G -XX:+UseG1GC          
       command: ["sh", "-c"]

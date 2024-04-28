@@ -12,28 +12,22 @@
 # limitations under the License.
 #
 
+name: 25k TPS 1 producers and 1 consumers on 1 topic / 1 partition / 1Lb
 
-name: Kafka-exactly-once
-driverClass: io.openmessaging.benchmark.driver.kafka.KafkaBenchmarkDriver
+topics: 1
+partitionsPerTopic: 100
 
-# Kafka client-specific configuration
-replicationFactor: '3'
+messageSize: 1000000
+useRandomizedPayloads: true
+randomBytesRatio: 0.5
+randomizedPayloadPoolSize: 100
 
-topicConfig: |
-  min.insync.replicas=2
+subscriptionsPerTopic: 1
+consumerPerSubscription: 1
+producersPerTopic: 1
 
-commonConfig: |
-  bootstrap.servers=borker1:9092
+# Discover max-sustainable rate
+producerRate: 25000
 
-producerConfig: |
-  enable.idempotence=true
-  max.in.flight.requests.per.connection=1
-  retries=2147483647
-  acks=all
-  linger.ms=1
-  batch.size=1048576
-
-consumerConfig: |
-  auto.offset.reset=earliest
-  enable.auto.commit=false
-  max.partition.fetch.bytes=10485760
+consumerBacklogSizeGB: 0
+testDurationMinutes: 5
