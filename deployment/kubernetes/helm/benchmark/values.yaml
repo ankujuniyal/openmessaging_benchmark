@@ -13,10 +13,13 @@
 #
 
 numWorkers: 4
-#image: openmessaging/openmessaging-benchmark:latest
-image: harbor.india.airtel.itm/devops/openmessaging/openmessaging-benchmark:latest
+#image: ankuj/openmessaging-benchmark:0.0.2-SNAPSHOT
+#image: harbor.india.airtel.itm/devops/openmessaging/openmessaging-benchmark:latest
+image:     image-registry.openshift-image-registry.svc:5000/digital-experience/openmessaging-benchmark:0.0.2-SNAPSHOT
 imagePullPolicy: Always
-workload: workloads/1-topic-16-partitions-1kb.yaml
+workload: max-rate-100-topics-3-partition-64kb.yaml #Read from configmap, also from image we can pick e.g workload: workloads/1-topic-16-partitions-1kb.yaml
+#workload: workloads/1-topic-16-partitions-1kb.yaml
+
 driver: kafka-exactly-once.yaml
 
 # Resource Configurations

@@ -259,6 +259,9 @@
                         <exclude>**/*.pyc</exclude>
                         <exclude>**/.pydevproject</exclude>
                         <exclude>.github/**</exclude>
+                        <exclude>.idea/**</exclude>
+                        <exclude>bin/**</exclude>
+                        <exclude>deployment/**</exclude>
                     </excludes>
                     <mapping>
                         <benchmark>SCRIPT_STYLE</benchmark>

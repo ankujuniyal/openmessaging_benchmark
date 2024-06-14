@@ -23,7 +23,7 @@ topicConfig: |
   min.insync.replicas=2
 
 commonConfig: |
-  bootstrap.servers=10.5.28.114:9092
+  bootstrap.servers=Broker1:9092
 
 producerConfig: |
   enable.idempotence=true

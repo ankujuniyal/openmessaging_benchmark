@@ -11,6 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+#Create PVC and store all workload, config in one place
 
 kind: ConfigMap
 apiVersion: v1
@@ -25,13 +26,13 @@ data:
     driverClass: io.openmessaging.benchmark.driver.kafka.KafkaBenchmarkDriver
 
     # Kafka client-specific configuration
-    replicationFactor: '3'
+    replicationFactor: '4'
 
     topicConfig: |
       min.insync.replicas=2
 
     commonConfig: |
-      bootstrap.servers=10.5.28.114:9092
+      bootstrap.servers=Broker1:9092
 
     producerConfig: |
       enable.idempotence=true
@@ -45,6 +46,27 @@ data:
       auto.offset.reset=earliest
       enable.auto.commit=false
       max.partition.fetch.bytes=10485760
+
+  max-rate-100-topics-3-partition-64kb.yaml: |
+    name: max-rate-100-topics-3-partition-64kb
+
+    topics: 100
+    partitionsPerTopic: 3
+    messageSize: 65536
+    #payloadFile: "payload/payload-1Kb.data"
+    useRandomizedPayloads: true
+    randomBytesRatio: 0.5
+    randomizedPayloadPoolSize: 100
+
+    subscriptionsPerTopic: 1
+    consumerPerSubscription: 1
+    producersPerTopic: 1
+
+    # Discover max-sustainable rate
+    producerRate: 10000000
+
+    consumerBacklogSizeGB: 0
+    testDurationMinutes: 30
 ---
 
 apiVersion: v1
@@ -55,12 +77,24 @@ metadata:
     app: {{ .Release.Name }}
     role: driver
 spec:
-  securityContext:
-    runAsUser: 0
+#  securityContext:
+#    runAsUser: 1000840000
   volumes:
     - configMap:
         name: {{ .Release.Name }}-driver-config
       name: driver-yaml
+      items:
+        - key: kafka-exactly-once.yaml
+          path: {{ .Values.driver}}
+    - configMap:
+        name: {{ .Release.Name }}-driver-config
+      name: workload-yaml
+      items:
+        - key: max-rate-100-topics-3-partition-64kb.yaml
+          path:  {{ .Values.workload}}     
+    - name: kafka-workbench-data
+      persistentVolumeClaim:
+        claimName: digital-experience-kafka-workbench-data
   containers:
     - name: {{ .Release.Name }}-driver
       imagePullPolicy: {{ .Values.imagePullPolicy }}
@@ -71,6 +105,12 @@ spec:
           mountPath: "/benchmark/{{ .Values.driver}}"
           subPath: {{ .Values.driver}}
           readOnly: true
+        - name: workload-yaml
+          mountPath: "/benchmark/{{ .Values.workload}}"
+          subPath: {{ .Values.workload}}
+          readOnly: true          
+        - name: kafka-workbench-data
+          mountPath: /opt
       resources:
         limits:
           memory: {{ .Values.driverMemoryLimit }}
@@ -88,7 +128,9 @@ spec:
         - name: JVM_MEM
           value: '-Xms1G -Xmx16G -XX:+UseG1GC'          
       command: ["sh", "-c"]
-      args: ["bin/benchmark --drivers {{ .Values.driver }} --workers $WORKERS {{ .Values.workload }}"]
-#        - >
-#          echo "bin/benchmark --drivers {{ .Values.driver }} --workers $WORKERS {{ .Values.workload }}" > example-run.sh &&
-#          tail -f /dev/null
+      args: ["bin/benchmark --drivers {{ .Values.driver }} --workers $WORKERS /benchmark/max-rate-100-topics-3-partition-64kb.yaml --output /opt/workloads_output.json"]
+      # args:
+      #   - >
+      #     echo "bin/benchmark --drivers {{ .Values.driver }} --workers $WORKERS workloads/max-rate-100-topics-1-partition-64kb.yaml" > /opt/example-run.sh &&
+      #     tail -f /dev/null
+
